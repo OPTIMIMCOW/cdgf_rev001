@@ -12,28 +12,30 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] Thruster[] thruster;
 
     [Tooltip("A multiplier to the input. Describes the maximum speed in degrees / second. To flip vertical rotation, set Y to a negative value")]
-    [SerializeField] private Vector2 sensitivity = new Vector2(1000,1000);
+    [SerializeField] private Vector2 sensitivity = new Vector2(1000, 1000);
     [Tooltip("The rotation acceleration, in degrees / second")]
     [SerializeField] private Vector2 acceleration = new Vector2(1000, 1000);
     [Tooltip("The maximum angle from the horizon the player can rotate, in degrees")]
     [SerializeField] private float maxVerticalAngleFromHorizon;
     [Tooltip("The period to wait until resetting the input value. Set this as low as possible, without encountering stuttering")]
-    [SerializeField] private float inputLagPeriod;
+    [SerializeField] private float inputLagPeriod = 1f;
+    [SerializeField] private float TEST = 50f;
 
     Transform myTransform;
     private Vector2 movementVector; // The current rotation velocity, in degrees
     private Vector2 thisFrameRotation; // The current rotation, in degrees
     private Vector2 lastInputEvent; // The last received non-zero input value
     private float inputLagTimer; // The time since the last received non-zero input value
+    private float yRotationalVelocity;
 
-    private Vector3 desiredRotation;
+    private Vector3 continuousRotation;
     private void Awake()
     {
         myTransform = transform;
 
-        desiredRotation.x = transform.rotation.x + 50f;
-        desiredRotation.y = transform.rotation.y;
-        desiredRotation.z = transform.rotation.z;
+        continuousRotation.x = transform.rotation.x + TEST;
+        continuousRotation.y = transform.rotation.y;
+        continuousRotation.z = transform.rotation.z;
     }
 
     void Update()
@@ -64,9 +66,18 @@ public class PlayerMovement : MonoBehaviour
 
     void Rotations()
     {
-        var wantedVelocity = GetInput() * sensitivity;
+        // get input 
+        // scale inputs to a max value
+        // enact the rotation
+
+        //var wantedVelocity = GetInput() * sensitivity;
+        UpdateRotationalAccelleration();
+        var wantedVelocity = lastInputEvent * TEST;
+
+
+        //Debug.Log($"lastInputEvent: {lastInputEvent}");
         //Debug.Log($"wantedVelocity: {wantedVelocity}");
-        movementVector = wantedVelocity;
+        //movementVector = wantedVelocity;
 
         //Debug.Log($"wanted velocity: {wantedVelocity}");
 
@@ -76,34 +87,10 @@ public class PlayerMovement : MonoBehaviour
         //    Mathf.MoveTowards(movementVector.y, wantedVelocity.y, acceleration.y * Time.deltaTime));
 
 
-        thisFrameRotation += movementVector * Time.deltaTime;
+        //thisFrameRotation += movementVector * Time.deltaTime;
 
-        //float yaw = turnSpeed * Time.deltaTime * Input.GetAxis("Mouse X");
-        float pitch = turnSpeed * Time.deltaTime * Input.GetAxis("Pitch");
-        float roll = turnSpeed * Time.deltaTime * Input.GetAxis("Roll");
-        //myTransform.Rotate(pitch, yaw, -roll);
-
-        //var final = new Vector3(0, myTransform.localEulerAngles.x + 1, 0);
-
-        //var final = new Vector3(transform.localEulerAngles.x + 0.1f,0, 0);
-        Debug.Log($"after: {transform.localEulerAngles.x}");
-
-        //transform.localEulerAngles = final;
-
-
-
-        transform.Rotate(desiredRotation * Time.deltaTime);
-
-        //var currentX = transform.localEulerAngles.x;
-        //float newX = currentX + 0.1f;
-        //if (currentX > 90f)
-        //{
-        //    newX = (newX * -1f) +360f;
-        //}
-
-        //transform.localEulerAngles = new Vector3(newX, 0, 0);
-
-
+        transform.Rotate(new Vector3(yRotationalVelocity, 0, 0) * Time.deltaTime);
+        // works ok but need a dead zone for not making changes to the movement.
     }
     void Thrust()
     {
@@ -114,22 +101,31 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private Vector2 GetInput()
+    private void UpdateRotationalAccelleration()
     {// TODO extend to include roll rotation
 
-        // Add to the lag timer
-        inputLagTimer += Time.deltaTime;
+        float screenX = Screen.width;
+        float screenY = Screen.height;
+        float mouseX = Input.mousePosition.x;
+        float mouseY = Input.mousePosition.y;
+
+        if (mouseX < 0 || mouseX > screenX || mouseY < 0 || mouseY > screenY) return;
+
 
         Vector2 input = new Vector2(
             Input.GetAxis("Mouse X"),
             Input.GetAxis("Mouse Y")
         );
 
-        if ((Mathf.Approximately(0, input.x) && Mathf.Approximately(0, input.y)) == false || inputLagTimer >= inputLagPeriod)
+        if (Mathf.Approximately(0, input.x) && Mathf.Approximately(0, input.y)) return; // Actually dont need this check if this is just getting rid of 0s as +-0 is unchanged
+        
+        Debug.Log(input.y);
+        if(input.y > 0.2 || input.y < -0.2)
         {
-            lastInputEvent = input;
-            inputLagTimer = 0;
+        yRotationalVelocity += input.y * -1f * TEST; 
+
         }
-        return lastInputEvent; // dont like this being a global variable, TODO look into changing to be just here and only the timeout is used. 
+        //lastInputEvent = input;
+
     }
 }
