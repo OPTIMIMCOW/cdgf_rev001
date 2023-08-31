@@ -720,6 +720,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8069486964195710945, guid: 9101a3caddf917a4c82787ccd038a17a, type: 3}
+      propertyPath: TEST
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8069486964195710945, guid: 9101a3caddf917a4c82787ccd038a17a, type: 3}
       propertyPath: inputLagPeriod
       value: 1
       objectReference: {fileID: 0}
