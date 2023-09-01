@@ -1,8 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -101,6 +96,22 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    public static float Remap(float value)
+    {
+        var boundValue = value < 0
+            ? value < -10
+                ? -10
+                : value
+            : value > 10
+                ? 10
+                : value;
+
+        var result = (boundValue / 0.4f);
+
+        return result * 0.4f;
+    }
+
+
     private void UpdateRotationalAccelleration()
     {// TODO extend to include roll rotation
 
@@ -111,21 +122,20 @@ public class PlayerMovement : MonoBehaviour
 
         if (mouseX < 0 || mouseX > screenX || mouseY < 0 || mouseY > screenY) return;
 
-
-        Vector2 input = new Vector2(
-            Input.GetAxis("Mouse X"),
-            Input.GetAxis("Mouse Y")
-        );
+        Vector2 input = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y") * -1f);
 
         if (Mathf.Approximately(0, input.x) && Mathf.Approximately(0, input.y)) return; // Actually dont need this check if this is just getting rid of 0s as +-0 is unchanged
-        
-        Debug.Log(input.y);
-        if(input.y > 0.2 || input.y < -0.2)
+
+
+        var maginfied = input * TEST;
+        var boundY = Remap(maginfied.y);
+        Debug.Log($"maginfied: {boundY}");
+
+        if (boundY > 2 || boundY < -2)
         {
-        yRotationalVelocity += input.y * -1f * TEST; 
+            yRotationalVelocity += boundY;
 
         }
-        //lastInputEvent = input;
 
     }
 }
