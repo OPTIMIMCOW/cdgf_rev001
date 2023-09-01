@@ -14,7 +14,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float maxVerticalAngleFromHorizon;
     [Tooltip("The period to wait until resetting the input value. Set this as low as possible, without encountering stuttering")]
     [SerializeField] private float inputLagPeriod = 1f;
-    [SerializeField] private float TEST = 50f;
+    [SerializeField] private float TEST = 0.5f;
 
     Transform myTransform;
     private Vector2 movementVector; // The current rotation velocity, in degrees
@@ -22,6 +22,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 lastInputEvent; // The last received non-zero input value
     private float inputLagTimer; // The time since the last received non-zero input value
     private float yRotationalVelocity;
+    private Vector2 magnifiedMovementVector;
 
     private Vector3 continuousRotation;
     private void Awake()
@@ -84,7 +85,7 @@ public class PlayerMovement : MonoBehaviour
 
         //thisFrameRotation += movementVector * Time.deltaTime;
 
-        transform.Rotate(new Vector3(yRotationalVelocity, 0, 0) * Time.deltaTime);
+        transform.Rotate(new Vector3(magnifiedMovementVector.y *-1f, 0, 0) * Time.deltaTime);
         // works ok but need a dead zone for not making changes to the movement.
     }
     void Thrust()
@@ -115,27 +116,28 @@ public class PlayerMovement : MonoBehaviour
     private void UpdateRotationalAccelleration()
     {// TODO extend to include roll rotation
 
+        // rotate based on where position of mouse is on the screen. Do not do it additive, abosolute based on the mouse poisition. We can consider doing the addative approach later. 
+
         float screenX = Screen.width;
         float screenY = Screen.height;
         float mouseX = Input.mousePosition.x;
         float mouseY = Input.mousePosition.y;
 
+
         if (mouseX < 0 || mouseX > screenX || mouseY < 0 || mouseY > screenY) return;
 
-        Vector2 input = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y") * -1f);
+        var mouseLocation = new Vector2(mouseX, mouseY);
+        var screenCenter = new Vector2(screenX/2, screenY/2);
+        var movementVector = mouseLocation- screenCenter;
 
-        if (Mathf.Approximately(0, input.x) && Mathf.Approximately(0, input.y)) return; // Actually dont need this check if this is just getting rid of 0s as +-0 is unchanged
+        Debug.Log($"movementVector : {movementVector}");
 
 
-        var maginfied = input * TEST;
-        var boundY = Remap(maginfied.y);
-        Debug.Log($"maginfied: {boundY}");
 
-        if (boundY > 2 || boundY < -2)
-        {
-            yRotationalVelocity += boundY;
 
-        }
+        magnifiedMovementVector = movementVector * TEST;
+        //var boundY = Remap(maginfied.y);
+
 
     }
 }
