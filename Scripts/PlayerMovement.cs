@@ -1,6 +1,4 @@
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
-using UnityEngine.UIElements;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -14,6 +12,7 @@ public class PlayerMovement : MonoBehaviour
 
     Transform myTransform;
     private Vector2 xyRotationVector;
+    private float zRotationVector;
 
     private void Awake()
     {
@@ -29,8 +28,9 @@ public class PlayerMovement : MonoBehaviour
     void Rotations()
     {
         UpdateAbsoluteXYRotationalVelocity();
+        UpdateAbsoluteZRoationalVelocity();
 
-        myTransform.Rotate(new Vector3(xyRotationVector.y *-1f, xyRotationVector.x, 0) * Time.deltaTime);
+        myTransform.Rotate(new Vector3(xyRotationVector.y *-1f, xyRotationVector.x, zRotationVector) * Time.deltaTime);
     }
     void Thrust()
     {
@@ -77,10 +77,7 @@ public class PlayerMovement : MonoBehaviour
 
 
     private void UpdateAbsoluteXYRotationalVelocity()
-    {// TODO extend to include roll rotation
-
-        // rotate based on where position of mouse is on the screen. Do not do it additive, abosolute based on the mouse poisition. We can consider doing the addative approach later. 
-
+    {
         float screenX = Screen.width;
         float screenY = Screen.height;
         float mouseX = Input.mousePosition.x;
@@ -96,8 +93,12 @@ public class PlayerMovement : MonoBehaviour
         xyRotationVector = finalMovmentVector;
     }
 
-        magnifiedMovementVector = finalMovmentVector;
+    private void UpdateAbsoluteZRoationalVelocity()
+    {
+        var input = Input.mouseScrollDelta.y;
 
+        if (Mathf.Approximately(0, input) ) return;
 
+        zRotationVector += input * step;
     }
 }
