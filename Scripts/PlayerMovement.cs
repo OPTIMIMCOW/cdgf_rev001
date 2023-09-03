@@ -1,4 +1,6 @@
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
+using UnityEngine.UIElements;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -11,16 +13,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float step = 10f;
 
     Transform myTransform;
-    private Vector2 magnifiedMovementVector;
+    private Vector2 xyRotationVector;
 
-    private Vector3 continuousRotation;
     private void Awake()
     {
         myTransform = transform;
-
-        continuousRotation.x = transform.rotation.x + sensitivity;
-        continuousRotation.y = transform.rotation.y;
-        continuousRotation.z = transform.rotation.z;
     }
 
     void Update()
@@ -31,9 +28,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Rotations()
     {
-        UpdateAbsoluteRotationalVelocity();
+        UpdateAbsoluteXYRotationalVelocity();
 
-        transform.Rotate(new Vector3(magnifiedMovementVector.y *-1f, 0, 0) * Time.deltaTime);
+        myTransform.Rotate(new Vector3(xyRotationVector.y *-1f, xyRotationVector.x, 0) * Time.deltaTime);
     }
     void Thrust()
     {
@@ -72,19 +69,14 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector2 ApplySensitivitySetting(Vector2 input)
     {
-        Debug.Log($"input : {input}");
-
         var quadratic = new Vector2(SquareWithDirection(input.x), SquareWithDirection(input.y));
-        Debug.Log($"quadratic : {quadratic}");
         var scaled = quadratic * sensitivity;
-        Debug.Log($"scaled : {scaled}");
         var descrete = new Vector2 (BindAndDescretize(scaled.x), BindAndDescretize(scaled.y));
-        Debug.Log($"descrete : {descrete}");
         return descrete;
     }
 
 
-    private void UpdateAbsoluteRotationalVelocity()
+    private void UpdateAbsoluteXYRotationalVelocity()
     {// TODO extend to include roll rotation
 
         // rotate based on where position of mouse is on the screen. Do not do it additive, abosolute based on the mouse poisition. We can consider doing the addative approach later. 
@@ -101,8 +93,8 @@ public class PlayerMovement : MonoBehaviour
         var screenCenter = new Vector2(screenX/2, screenY/2);
         var movementVector = mouseLocation- screenCenter;
         var finalMovmentVector = ApplySensitivitySetting(movementVector);
-
-        Debug.Log($"finalMovmentVector : {finalMovmentVector}");
+        xyRotationVector = finalMovmentVector;
+    }
 
         magnifiedMovementVector = finalMovmentVector;
 
