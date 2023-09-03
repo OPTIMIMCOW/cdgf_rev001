@@ -6,22 +6,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float turnSpeed = 5f;
     [SerializeField] Thruster[] thruster;
 
-    [Tooltip("A multiplier to the input. Describes the maximum speed in degrees / second. To flip vertical rotation, set Y to a negative value")]
-    [SerializeField] private Vector2 sensitivity = new Vector2(1000, 1000);
-    [Tooltip("The rotation acceleration, in degrees / second")]
-    [SerializeField] private Vector2 acceleration = new Vector2(1000, 1000);
-    [Tooltip("The maximum angle from the horizon the player can rotate, in degrees")]
-    [SerializeField] private float maxVerticalAngleFromHorizon;
-    [Tooltip("The period to wait until resetting the input value. Set this as low as possible, without encountering stuttering")]
-    [SerializeField] private float inputLagPeriod = 1f;
-    [SerializeField] private float TEST = 0.5f;
+    [SerializeField] private float sensitivity = 0.005f;
+    [SerializeField] private float boundLimit = 300f;
+    [SerializeField] private float step = 10f;
 
     Transform myTransform;
-    private Vector2 movementVector; // The current rotation velocity, in degrees
-    private Vector2 thisFrameRotation; // The current rotation, in degrees
-    private Vector2 lastInputEvent; // The last received non-zero input value
-    private float inputLagTimer; // The time since the last received non-zero input value
-    private float yRotationalVelocity;
     private Vector2 magnifiedMovementVector;
 
     private Vector3 continuousRotation;
@@ -29,7 +18,7 @@ public class PlayerMovement : MonoBehaviour
     {
         myTransform = transform;
 
-        continuousRotation.x = transform.rotation.x + TEST;
+        continuousRotation.x = transform.rotation.x + sensitivity;
         continuousRotation.y = transform.rotation.y;
         continuousRotation.z = transform.rotation.z;
     }
@@ -40,53 +29,11 @@ public class PlayerMovement : MonoBehaviour
         Rotations();
     }
 
-    //private void OnEnable()
-    //{
-    //    movementVector = Vector2.zero;
-    //    inputLagTimer = 0;
-    //    lastInputEvent = Vector2.zero;
-
-    //    // Calculate the current rotation by getting the gameObject's local euler angles
-    //    Vector3 euler = transform.localEulerAngles;
-    //    // Euler angles range from [0, 360), but we want [-180, 180)
-    //    if (euler.x >= 180)
-    //    {
-    //        euler.x -= 360;
-    //    }
-
-    //    transform.localEulerAngles = euler;
-    //    // Rotation is stored as (horizontal, vertical), which corresponds to the euler angles
-    //    // around the y (up) axis and the x (right) axis
-    //    thisFrameRotation = new Vector2(euler.y, euler.x);
-    //}
-
     void Rotations()
     {
-        // get input 
-        // scale inputs to a max value
-        // enact the rotation
-
-        //var wantedVelocity = GetInput() * sensitivity;
-        UpdateRotationalAccelleration();
-        var wantedVelocity = lastInputEvent * TEST;
-
-
-        //Debug.Log($"lastInputEvent: {lastInputEvent}");
-        //Debug.Log($"wantedVelocity: {wantedVelocity}");
-        //movementVector = wantedVelocity;
-
-        //Debug.Log($"wanted velocity: {wantedVelocity}");
-
-        // I dont think we want to use MoveTowards, we want to rotate and keep rotating. 
-        //movementVector = new Vector2(
-        //    Mathf.MoveTowards(movementVector.x, wantedVelocity.x, acceleration.x * Time.deltaTime),
-        //    Mathf.MoveTowards(movementVector.y, wantedVelocity.y, acceleration.y * Time.deltaTime));
-
-
-        //thisFrameRotation += movementVector * Time.deltaTime;
+        UpdateAbsoluteRotationalVelocity();
 
         transform.Rotate(new Vector3(magnifiedMovementVector.y *-1f, 0, 0) * Time.deltaTime);
-        // works ok but need a dead zone for not making changes to the movement.
     }
     void Thrust()
     {
@@ -97,23 +44,47 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public static float Remap(float value)
+    public float BindAndDescretize(float value)
     {
         var boundValue = value < 0
-            ? value < -10
-                ? -10
+            ? value <  boundLimit *-1f
+                ? boundLimit * -1f
                 : value
-            : value > 10
-                ? 10
+            : value > boundLimit
+                ? boundLimit
                 : value;
 
-        var result = (boundValue / 0.4f);
+        var result = (boundValue / step);
 
-        return result * 0.4f;
+        return result * step;
+    }
+
+    private float SquareWithDirection(float input)
+    {
+        var square = input * input;
+        if(input < 0)
+        {
+            square = square * -1f;
+        }
+
+        return square;
+    }
+
+    private Vector2 ApplySensitivitySetting(Vector2 input)
+    {
+        Debug.Log($"input : {input}");
+
+        var quadratic = new Vector2(SquareWithDirection(input.x), SquareWithDirection(input.y));
+        Debug.Log($"quadratic : {quadratic}");
+        var scaled = quadratic * sensitivity;
+        Debug.Log($"scaled : {scaled}");
+        var descrete = new Vector2 (BindAndDescretize(scaled.x), BindAndDescretize(scaled.y));
+        Debug.Log($"descrete : {descrete}");
+        return descrete;
     }
 
 
-    private void UpdateRotationalAccelleration()
+    private void UpdateAbsoluteRotationalVelocity()
     {// TODO extend to include roll rotation
 
         // rotate based on where position of mouse is on the screen. Do not do it additive, abosolute based on the mouse poisition. We can consider doing the addative approach later. 
@@ -129,14 +100,11 @@ public class PlayerMovement : MonoBehaviour
         var mouseLocation = new Vector2(mouseX, mouseY);
         var screenCenter = new Vector2(screenX/2, screenY/2);
         var movementVector = mouseLocation- screenCenter;
+        var finalMovmentVector = ApplySensitivitySetting(movementVector);
 
-        Debug.Log($"movementVector : {movementVector}");
+        Debug.Log($"finalMovmentVector : {finalMovmentVector}");
 
-
-
-
-        magnifiedMovementVector = movementVector * TEST;
-        //var boundY = Remap(maginfied.y);
+        magnifiedMovementVector = finalMovmentVector;
 
 
     }
