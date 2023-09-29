@@ -1,9 +1,9 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] float movementSpeed = 2f;
-    [SerializeField] float turnSpeed = 5f;
+    [SerializeField] float movementSpeed = 0.001f;
     [SerializeField] Thruster[] thruster;
 
     [SerializeField] private float sensitivity = 0.005f;
@@ -14,6 +14,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 xyRotationVector;
     private float zRotationVector;
 
+    private Vector3 translationWorldVector; 
+
     private void Awake()
     {
         myTransform = transform;
@@ -23,6 +25,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Thrust();
         Rotations();
+        NullifyVectors();
     }
 
     void Rotations()
@@ -30,15 +33,19 @@ public class PlayerMovement : MonoBehaviour
         UpdateAbsoluteXYRotationalVelocity();
         UpdateAbsoluteZRoationalVelocity();
 
+        //myTransform.Translate(new Vector3(0.001f,0f,0f), Space.World);
+
         myTransform.Rotate(new Vector3(xyRotationVector.y *-1f, xyRotationVector.x, zRotationVector) * Time.deltaTime);
     }
     void Thrust()
     {
+        // calculate what a movement forward vector is in the world space and translate using that. 
+        // just compound the position.forward vectors and update position on that or translate using that. 
         // Activate and deactivate trail rendereer. 
-        if (Input.GetAxis("Vertical") > 0)
-        {
-            myTransform.position += myTransform.forward * movementSpeed * Time.deltaTime * Input.GetAxis("Vertical");
-        }
+        UpdateTranslationVector();
+        myTransform.Translate(translationWorldVector * Time.deltaTime, Space.World);
+
+            //myTransform.position += thrustTranslationVector * Time.deltaTime;
     }
 
     public float BindAndDescretize(float value)
@@ -100,5 +107,35 @@ public class PlayerMovement : MonoBehaviour
         if (Mathf.Approximately(0, input) ) return;
 
         zRotationVector += input * step;
+    }
+
+    private void UpdateTranslationVector()
+    {
+        if (Input.GetAxis("Boost") > 0)
+        {
+            translationWorldVector += myTransform.forward * movementSpeed*5 * Input.GetAxis("Boost");
+        }
+
+        if (Input.GetAxis("Vertical") != 0)
+        {
+            translationWorldVector += myTransform.up * movementSpeed * Input.GetAxis("Vertical");
+        }
+
+        if (Input.GetAxis("Horizontal") != 0)
+        {
+            translationWorldVector += myTransform.right * movementSpeed * Input.GetAxis("Horizontal");
+        }
+    }
+
+    private void NullifyVectors()
+    {
+        Debug.Log("called");
+        if (Input.GetAxis("Reset") > 0)
+        {
+            Debug.Log("Hit");
+            xyRotationVector = new Vector2 (0, 0);
+        zRotationVector = 0f;
+        translationWorldVector = new Vector3 (0, 0, 0);
+        }
     }
 }

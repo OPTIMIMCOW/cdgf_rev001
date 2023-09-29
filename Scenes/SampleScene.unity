@@ -202,11 +202,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d93b6be7446d98b40933144eedf6a9d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSpeed: 2
-  turnSpeed: 5
+  movementSpeed: 0.001
   thruster: []
-  sensitivity: 0.5
-  boundLimit: 10
+  sensitivity: 0.005
+  boundLimit: 300
   step: 10
 --- !u!4 &605611225 stripped
 Transform:
